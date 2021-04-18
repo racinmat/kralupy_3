@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+</head>
+<body>
+  <div id="app">
+    {{ message }}  <br>
+    {{ reversedMessage }} <br>
+    {{ counter }} <br>
+    <button v-on:click='increment'>
+      incr
+    </button> <br>
+    <input type="text" v-model="message">
+  </div>
+</body>
+<script>
+  var app = new Vue({
+    el: '#app',
+    data: {
+      message: '',
+      counter: 0
+    },
+    methods: {
+      increment: function() {
+        console.log('Incrementing');
+        this.counter++;
+        console.log(this.counter);
+      }
+    },
+    computed: {
+      reversedMessage: function () {
+        // `this` points to the vm instance
+        return this.message.split('').reverse().join('')
+      }
+    }
+  })
+</script>
+</html>

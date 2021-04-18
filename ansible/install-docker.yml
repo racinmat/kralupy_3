@@ -1,0 +1,36 @@
+- hosts: do-ansible
+  tasks:
+  - name: Remove docker
+    apt:
+      name: docker docker-engine docker.io containerd runc
+      state: absent
+  - name: Update list
+    apt:
+      update_cache: yes
+  - name: Install some stuff
+    apt:
+      pkg:
+       - apt-transport-https
+       - ca-certificates
+       - curl
+       - gnupg-agent
+       - software-properties-common
+  - name: Add key
+    apt_key:
+      url: https://download.docker.com/linux/ubuntu/gpg
+      state: present
+  - name: Add repository
+    apt_repository:
+      repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
+      state: present
+  - name: Update list after repo add
+    apt:
+      update_cache: yes
+  - name: Install docker
+    apt:
+      pkg:
+       - docker-ce
+       - docker-ce-cli
+       - containerd.io
+  - name: Docker test
+    command: docker run hello-world

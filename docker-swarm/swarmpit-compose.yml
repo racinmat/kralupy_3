@@ -1,0 +1,101 @@
+version: '3.3'
+
+services:
+  gui:
+    image: swarmpit/swarmpit:latest
+    environment:
+      - SWARMPIT_DB=http://couchdb:5984
+      - SWARMPIT_INFLUXDB=http://influxdb:8086
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - net
+      - web
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 1024M
+        reservations:
+          cpus: '0.25'
+          memory: 512M
+      placement:
+        constraints:
+          - node.role == manager
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=web
+        - traefik.constraint-label=web
+        - traefik.http.routers.swarmpit-http.rule=Host(`swarm.klubcajovna.cz`)
+        - traefik.http.routers.swarmpit-http.entrypoints=http
+        - "traefik.http.routers.swarmpit-http.middlewares=security, hsts"
+        - traefik.http.routers.swarmpit-https.rule=Host(`swarm.klubcajovna.cz`)
+        - traefik.http.routers.swarmpit-https.entrypoints=https
+        - "traefik.http.routers.swarmpit-https.middlewares=security, hsts"
+        - traefik.http.routers.swarmpit-https.tls=true
+        - traefik.http.routers.swarmpit-https.tls.certresolver=le
+        - traefik.http.routers.swarmpit-https.tls.options=default
+        - traefik.http.services.swarmpit.loadbalancer.server.port=8080
+  couchdb:
+    image: couchdb:2.3.0
+    volumes:
+      - couchdb-data:/opt/couchdb/data
+    networks:
+      - net
+    deploy:
+      resources:
+        limits:
+          cpus: '0.30'
+          memory: 512M
+        reservations:
+          cpus: '0.15'
+          memory: 256M
+      placement:
+        constraints:
+          - node.labels.swarmpit.couchdb-data == true
+  influxdb:
+    image: influxdb:1.7
+    volumes:
+      - influxdb-data:/var/lib/influxdb
+    networks:
+      - net
+    deploy:
+      resources:
+        reservations:
+          cpus: '0.3'
+          memory: 128M
+        limits:
+          cpus: '0.6'
+          memory: 512M
+      placement:
+        constraints:
+          - node.labels.swarmpit.influxdb-data == true
+  agent:
+    image: swarmpit/agent:latest
+    environment:
+      - DOCKER_API_VERSION=1.35
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - net
+    deploy:
+      mode: global
+      resources:
+        limits:
+          cpus: '0.10'
+          memory: 64M
+        reservations:
+          cpus: '0.05'
+          memory: 32M
+networks:
+  net:
+    driver: overlay
+    attachable: true
+  web:
+    external: true
+
+volumes:
+  couchdb-data:
+    driver: local
+  influxdb-data:
+    driver: local
